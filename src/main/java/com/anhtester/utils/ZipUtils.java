@@ -22,18 +22,33 @@ public class ZipUtils {
     /* Make Zip file of Extent Reports in Project Root folder */
     public static void zipReportFolder() {
         if (FrameworkConstants.ZIP_FOLDER.toLowerCase().trim().equals(FrameworkConstants.YES)) {
-            if ((FrameworkConstants.ZIP_FOLDER_PATH != null || !FrameworkConstants.ZIP_FOLDER_PATH.isEmpty()) && (FrameworkConstants.ZIP_FOLDER_NAME != null || !FrameworkConstants.ZIP_FOLDER_NAME.isEmpty())) {
-                ZipUtil.pack(new File(FrameworkConstants.ZIP_FOLDER_PATH), new File(FrameworkConstants.ZIP_FOLDER_NAME));
+            if ((FrameworkConstants.ZIP_FOLDER_PATH != null && !FrameworkConstants.ZIP_FOLDER_PATH.isEmpty()) && (FrameworkConstants.ZIP_FOLDER_NAME != null && !FrameworkConstants.ZIP_FOLDER_NAME.isEmpty())) {
+                File sourceFolder = new File(FrameworkConstants.ZIP_FOLDER_PATH);
+                if (!sourceFolder.exists()) {
+                    LogUtils.warn("Skip zip: folder does not exist - " + FrameworkConstants.ZIP_FOLDER_PATH);
+                    return;
+                }
+                ZipUtil.pack(sourceFolder, new File(FrameworkConstants.ZIP_FOLDER_NAME));
                 LogUtils.info("Zipped " + FrameworkConstants.ZIPPED_EXTENT_REPORTS_FOLDER + " successfully !!");
             } else {
-                ZipUtil.pack(new File(FrameworkConstants.EXTENT_REPORT_FOLDER_PATH), new File(FrameworkConstants.ZIPPED_EXTENT_REPORTS_FOLDER));
+                File sourceFolder = new File(FrameworkConstants.EXTENT_REPORT_FOLDER_PATH);
+                if (!sourceFolder.exists()) {
+                    LogUtils.warn("Skip zip: folder does not exist - " + FrameworkConstants.EXTENT_REPORT_FOLDER_PATH);
+                    return;
+                }
+                ZipUtil.pack(sourceFolder, new File(FrameworkConstants.ZIPPED_EXTENT_REPORTS_FOLDER));
                 LogUtils.info("Zipped " + FrameworkConstants.ZIPPED_EXTENT_REPORTS_FOLDER + " successfully !!");
             }
         }
     }
 
     public static void zipFolder(String FolderPath, String ZipName) {
-        ZipUtil.pack(new File(FolderPath), new File(ZipName + ".zip"));
+        File folder = new File(FolderPath);
+        if (!folder.exists()) {
+            LogUtils.warn("Skip zipFolder: source folder does not exist - " + FolderPath);
+            return;
+        }
+        ZipUtil.pack(folder, new File(ZipName + ".zip"));
         LogUtils.info("Zipped " + FolderPath + " successfully !!");
     }
 
@@ -41,9 +56,13 @@ public class ZipUtils {
         String sourceFile = FilePath;
         FileOutputStream fos = null;
         try {
+            File fileToZip = new File(sourceFile);
+            if (!fileToZip.exists()) {
+                LogUtils.warn("Skip zipFile: source file does not exist - " + FilePath);
+                return;
+            }
             fos = new FileOutputStream(ZipName + ".zip");
             ZipOutputStream zipOut = new ZipOutputStream(fos);
-            File fileToZip = new File(sourceFile);
             FileInputStream fis = null;
             fis = new FileInputStream(fileToZip);
             ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
@@ -67,7 +86,12 @@ public class ZipUtils {
     }
 
     public static void unZip(String FileZipPath, String FolderOutput) {
-        ZipUtil.unpack(new File(FileZipPath), new File(FolderOutput));
+        File zipFile = new File(FileZipPath);
+        if (!zipFile.exists()) {
+            LogUtils.warn("Skip unZip: source zip does not exist - " + FileZipPath);
+            return;
+        }
+        ZipUtil.unpack(zipFile, new File(FolderOutput));
         LogUtils.info("Unzipped " + FileZipPath + " successfully !!");
     }
 
@@ -75,9 +99,14 @@ public class ZipUtils {
         try {
             String fileZip = FileZipPath;
             File outputDir = new File(FolderOutput);
+            File sourceZip = new File(fileZip);
+            if (!sourceZip.exists()) {
+                LogUtils.warn("Skip unZipFile: source zip does not exist - " + FileZipPath);
+                return;
+            }
 
             byte[] buffer = new byte[1024];
-            ZipInputStream zis = new ZipInputStream(new FileInputStream(fileZip));
+            ZipInputStream zis = new ZipInputStream(new FileInputStream(sourceZip));
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
                 File newFile = newFile(outputDir, zipEntry);

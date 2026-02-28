@@ -21,6 +21,7 @@ public class DriverManager {
     public static void quit() {
         if (DriverManager.getDriver() != null){
             DriverManager.getDriver().quit();
+            driver.remove();
         }
     }
 

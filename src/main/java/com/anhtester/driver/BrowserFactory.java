@@ -5,8 +5,6 @@
 
 package com.anhtester.driver;
 
-import com.anhtester.constants.FrameworkConstants;
-import com.anhtester.exceptions.HeadlessNotSupportedException;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -20,8 +18,6 @@ import org.openqa.selenium.safari.SafariOptions;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static java.lang.Boolean.TRUE;
 
 public enum BrowserFactory {
 
@@ -115,8 +111,6 @@ public enum BrowserFactory {
             return options;
         }
     };
-
-    private static final String START_MAXIMIZED = "--start-maximized";
 
     public abstract WebDriver createDriver();
 

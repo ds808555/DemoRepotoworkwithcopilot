@@ -13,6 +13,8 @@ import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 //import tech.grasshopper.reporter.ExtentPDFReporter;
 
 import java.io.File;
@@ -84,7 +86,17 @@ public class ExtentReportManager {
      * @param message the message
      */
     public static void addScreenShot(String message) {
-        String base64Image = "data:image/png;base64," + ((TakesScreenshot) DriverManager.getDriver()).getScreenshotAs(OutputType.BASE64);
+        if (!canCaptureScreenshot()) {
+            LogUtils.warn("Skip screenshot: WebDriver session is not active.");
+            return;
+        }
+        String base64Image;
+        try {
+            base64Image = "data:image/png;base64," + ((TakesScreenshot) DriverManager.getDriver()).getScreenshotAs(OutputType.BASE64);
+        } catch (Exception e) {
+            LogUtils.warn("Skip screenshot: unable to capture current browser window.");
+            return;
+        }
 
         //Base64 from Screenshot of Selenium
         ExtentTestManager.getExtentTest().log(Status.INFO, MediaEntityBuilder.createScreenCaptureFromBase64String(base64Image).build());
@@ -101,7 +113,17 @@ public class ExtentReportManager {
      * @param message the message
      */
     public static void addScreenShot(Status status, String message) {
-        String base64Image = "data:image/png;base64," + ((TakesScreenshot) DriverManager.getDriver()).getScreenshotAs(OutputType.BASE64);
+        if (!canCaptureScreenshot()) {
+            LogUtils.warn("Skip screenshot: WebDriver session is not active.");
+            return;
+        }
+        String base64Image;
+        try {
+            base64Image = "data:image/png;base64," + ((TakesScreenshot) DriverManager.getDriver()).getScreenshotAs(OutputType.BASE64);
+        } catch (Exception e) {
+            LogUtils.warn("Skip screenshot: unable to capture current browser window.");
+            return;
+        }
 
         //Base64 from Screenshot of Selenium
         ExtentTestManager.getExtentTest().log(status, MediaEntityBuilder.createScreenCaptureFromBase64String(base64Image).build());
@@ -190,6 +212,21 @@ public class ExtentReportManager {
 
     public static void warning(String message) {
         ExtentTestManager.getExtentTest().log(Status.WARNING, message);
+    }
+
+    private static boolean canCaptureScreenshot() {
+        try {
+            WebDriver driver = DriverManager.getDriver();
+            if (!(driver instanceof TakesScreenshot)) {
+                return false;
+            }
+            if (driver instanceof RemoteWebDriver remoteWebDriver) {
+                return remoteWebDriver.getSessionId() != null;
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
