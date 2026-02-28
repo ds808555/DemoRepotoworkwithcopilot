@@ -43,7 +43,7 @@ public class CaptureHelpers extends ScreenRecorder {
     //Hàm xây dựng
     public CaptureHelpers(GraphicsConfiguration cfg, Rectangle captureArea, Format fileFormat, Format screenFormat, Format mouseFormat, Format audioFormat, File movieFolder, String name) throws IOException, AWTException {
         super(cfg, captureArea, fileFormat, screenFormat, mouseFormat, audioFormat, movieFolder);
-        this.name = name;
+        CaptureHelpers.name = name;
     }
 
     //Hàm này bắt buộc để ghi đè custom lại hàm trong thư viên viết sẵn
@@ -77,7 +77,7 @@ public class CaptureHelpers extends ScreenRecorder {
 
             screenRecorder.start();
         } catch (IOException | AWTException e) {
-            e.printStackTrace();
+            LogUtils.error("Error while starting screen recording: " + e.getMessage());
         }
     }
 
@@ -86,7 +86,7 @@ public class CaptureHelpers extends ScreenRecorder {
         try {
             screenRecorder.stop();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogUtils.error("Error while stopping screen recording: " + e.getMessage());
         }
     }
 
@@ -201,6 +201,4 @@ public class CaptureHelpers extends ScreenRecorder {
 
         return filePath;
     }
-
-
 }
