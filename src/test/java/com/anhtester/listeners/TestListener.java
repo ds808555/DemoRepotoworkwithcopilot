@@ -21,9 +21,11 @@ import com.google.common.collect.ImmutableMap;
 import org.testng.*;
 
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.stream.Collectors;
 
 import static com.anhtester.constants.FrameworkConstants.*;
 
@@ -33,6 +35,10 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
     static int count_passedTCs;
     static int count_skippedTCs;
     static int count_failedTCs;
+    static long suiteStartTimeMs;
+    static long totalTestDurationMs;
+
+    private static final long SLOW_TEST_THRESHOLD_MS = 20000;
 
     private ScreenRecorderHelpers screenRecorder;
 
@@ -54,20 +60,28 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
 
     @Override
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-        // Before every method in the Test Class
-        //System.out.println(method.getTestMethod().getMethodName());
+        if (method.isTestMethod()) {
+            ExtentReportManager.logMessage(Status.INFO, "Step Start: " + method.getTestMethod().getMethodName());
+        }
     }
 
     @Override
     public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-        // After every method in the Test Class
-        //System.out.println(method.getTestMethod().getMethodName());
+        if (method.isTestMethod()) {
+            ExtentReportManager.logMessage(Status.INFO, "Step End: " + method.getTestMethod().getMethodName());
+        }
     }
 
     @Override
     public void onStart(ISuite iSuite) {
         LogUtils.info("********** RUN STARTED **********");
         LogUtils.info("========= INSTALLING CONFIGURATION DATA =========");
+        count_totalTCs = 0;
+        count_passedTCs = 0;
+        count_failedTCs = 0;
+        count_skippedTCs = 0;
+        totalTestDurationMs = 0;
+        suiteStartTimeMs = System.currentTimeMillis();
 //        try {
 //            FileUtils.deleteDirectory(new File("target/allure-results"));
 //            System.out.println("Deleted Directory target/allure-results");
@@ -86,6 +100,19 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
     public void onFinish(ISuite iSuite) {
         LogUtils.info("********** RUN FINISHED **********");
         LogUtils.info("=====> End Suite: " + iSuite.getName());
+        long runDurationMs = Math.max(0, System.currentTimeMillis() - suiteStartTimeMs);
+        double avgDurationMs = count_totalTCs == 0 ? 0 : (double) totalTestDurationMs / count_totalTCs;
+
+        ExtentReportManager.createSuiteSummary(
+            iSuite.getName(),
+            count_totalTCs,
+            count_passedTCs,
+            count_failedTCs,
+            count_skippedTCs,
+            runDurationMs,
+            avgDurationMs
+        );
+
         //End Suite and execute Extents Report
         ExtentReportManager.flushReports();
         //Zip Folder reports
@@ -195,6 +222,24 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
         ExtentReportManager.addAuthors(getAuthorType(iTestResult));
         ExtentReportManager.addCategories(getCategoryType(iTestResult));
         ExtentReportManager.addDevices();
+        ExtentReportManager.assignReportTags(
+            inferProject(iTestResult),
+            inferModule(iTestResult),
+            inferTestType(iTestResult)
+        );
+
+        ExtentReportManager.logTestMetadata(
+            iTestResult.getTestContext().getSuite().getName(),
+            iTestResult.getTestClass().getName(),
+            iTestResult.getMethod().getMethodName(),
+            getTestDescription(iTestResult),
+            inferModule(iTestResult),
+            inferTestType(iTestResult),
+            inferDataRow(iTestResult),
+            inferExpectedValue(iTestResult),
+            inferActualValue(iTestResult)
+        );
+
         ExtentReportManager.info(BrowserInfoUtils.getOSInfo());
 
         if (VIDEO_RECORD.toLowerCase().trim().equals(YES)) {
@@ -207,12 +252,15 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
     public void onTestSuccess(ITestResult iTestResult) {
         LogUtils.info("Test case: " + getTestName(iTestResult) + " is passed.");
         count_passedTCs = count_passedTCs + 1;
+        long duration = Math.max(0, iTestResult.getEndMillis() - iTestResult.getStartMillis());
+        totalTestDurationMs += duration;
 
         if (SCREENSHOT_PASSED_TCS.equals(YES)) {
             CaptureHelpers.captureScreenshot(DriverManager.getDriver(), getTestName(iTestResult));
             ExtentReportManager.addScreenShot(Status.PASS, getTestName(iTestResult));
         }
 
+        ExtentReportManager.logTimingInsight(duration, SLOW_TEST_THRESHOLD_MS);
         ExtentReportManager.logMessage(Status.PASS, "Test case: " + getTestName(iTestResult) + " is passed.");
 
         if (VIDEO_RECORD.trim().toLowerCase().equals(YES)) {
@@ -227,12 +275,16 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
         LogUtils.error(iTestResult.getThrowable());
 
         count_failedTCs = count_failedTCs + 1;
+        long duration = Math.max(0, iTestResult.getEndMillis() - iTestResult.getStartMillis());
+        totalTestDurationMs += duration;
 
         if (SCREENSHOT_FAILED_TCS.equals(YES)) {
             CaptureHelpers.captureScreenshot(DriverManager.getDriver(), getTestName(iTestResult));
             ExtentReportManager.addScreenShot(Status.FAIL, getTestName(iTestResult));
         }
 
+        ExtentReportManager.logTimingInsight(duration, SLOW_TEST_THRESHOLD_MS);
+        ExtentReportManager.logExpectedActual(inferExpectedValue(iTestResult), inferActualValue(iTestResult));
         ExtentReportManager.logMessage(Status.FAIL, iTestResult.getThrowable().toString());
 
         if (VIDEO_RECORD.toLowerCase().trim().equals(YES)) {
@@ -245,11 +297,14 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
     public void onTestSkipped(ITestResult iTestResult) {
         LogUtils.warn("WARNING!! Test case: " + getTestName(iTestResult) + " is skipped.");
         count_skippedTCs = count_skippedTCs + 1;
+        long duration = Math.max(0, iTestResult.getEndMillis() - iTestResult.getStartMillis());
+        totalTestDurationMs += duration;
 
         if (SCREENSHOT_SKIPPED_TCS.equals(YES)) {
             CaptureHelpers.captureScreenshot(DriverManager.getDriver(), getTestName(iTestResult));
         }
 
+        ExtentReportManager.logTimingInsight(duration, SLOW_TEST_THRESHOLD_MS);
         ExtentReportManager.logMessage(Status.SKIP, "Test case: " + getTestName(iTestResult) + " is skipped.");
 
         if (VIDEO_RECORD.toLowerCase().trim().equals(YES)) {
@@ -260,6 +315,91 @@ public class TestListener implements ITestListener, ISuiteListener, IInvokedMeth
     @Override
     public void onTestFailedButWithinSuccessPercentage(ITestResult iTestResult) {
         ExtentReportManager.logMessage("Test failed but it is in defined success ratio: " + getTestName(iTestResult));
+    }
+
+    private String inferProject(ITestResult iTestResult) {
+        String className = iTestResult.getTestClass().getName().toLowerCase();
+        if (className.contains(".cms.")) {
+            return "CMS";
+        }
+        if (className.contains(".crm.")) {
+            return "CRM";
+        }
+        return "General";
+    }
+
+    private String inferModule(ITestResult iTestResult) {
+        String className = iTestResult.getTestClass().getName();
+        String[] parts = className.split("\\.");
+        if (parts.length >= 2) {
+            return parts[parts.length - 2];
+        }
+        return iTestResult.getTestClass().getRealClass().getSimpleName();
+    }
+
+    private String inferTestType(ITestResult iTestResult) {
+        String methodName = iTestResult.getMethod().getMethodName().toLowerCase();
+        if (methodName.contains("fail") || methodName.contains("invalid") || methodName.contains("negative")) {
+            return "Negative";
+        }
+        if (methodName.contains("success") || methodName.contains("valid") || methodName.contains("positive")) {
+            return "Positive";
+        }
+        return "General";
+    }
+
+    private String inferDataRow(ITestResult iTestResult) {
+        Object[] parameters = iTestResult.getParameters();
+        if (parameters == null || parameters.length == 0) {
+            return "-";
+        }
+
+        Object first = parameters[0];
+        if (first instanceof Hashtable<?, ?> table) {
+            Object tc = table.get("TestCaseName");
+            if (tc == null) {
+                tc = table.get("testCaseName");
+            }
+            if (tc != null) {
+                return String.valueOf(tc);
+            }
+        }
+
+        return Arrays.stream(parameters)
+                .map(this::safeParameter)
+                .collect(Collectors.joining(" | "));
+    }
+
+    private String inferExpectedValue(ITestResult iTestResult) {
+        Object[] parameters = iTestResult.getParameters();
+        if (parameters != null && parameters.length > 0 && parameters[0] instanceof Hashtable<?, ?> table) {
+            Object expected = table.get("expected");
+            if (expected == null) {
+                expected = table.get("Expected");
+            }
+            if (expected != null) {
+                return String.valueOf(expected);
+            }
+        }
+        return "Validated by assertions in test flow";
+    }
+
+    private String inferActualValue(ITestResult iTestResult) {
+        if (iTestResult.getThrowable() != null) {
+            return iTestResult.getThrowable().getMessage();
+        }
+        return "Matched expected assertions";
+    }
+
+    private String safeParameter(Object value) {
+        if (value == null) {
+            return "null";
+        }
+        String text = value.toString();
+        if (text.length() > 100) {
+            return text.substring(0, 100) + "...";
+        }
+        return text;
     }
 
 }
