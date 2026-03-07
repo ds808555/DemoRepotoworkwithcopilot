@@ -1,4 +1,4 @@
-package com.anhtester.projects.cms.testcases;
+package com.anhtester.projects.cms.tests.user;
 
 import com.anhtester.common.BaseTest;
 import com.anhtester.constants.FrameworkConstants;

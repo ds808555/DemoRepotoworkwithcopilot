@@ -9,7 +9,7 @@
     <test name="Tests Order Product CMS">
         <parameter name="BROWSER" value="chrome"/>
         <classes>
-            <class name="com.anhtester.projects.cms.testcases.OrderTest"/>
+            <class name="com.anhtester.projects.cms.tests.user.OrderTest"/>
         </classes>
     </test>
 

@@ -61,6 +61,11 @@
         <!-- Suite XML path - CMS -->
         <suite.login>src/test/resources/suites/CMS/LoginTestCMS.xml</suite.login>
         <suite.order>src/test/resources/suites/CMS/OrderProductCMS.xml</suite.order>
+        <suite.cms.login.user>src/test/resources/suites/CMS/LoginUserCMS.xml</suite.cms.login.user>
+        <suite.cms.login.admin>src/test/resources/suites/CMS/LoginAdminCMS.xml</suite.cms.login.admin>
+        <suite.cms.user>src/test/resources/suites/CMS/UserCMS.xml</suite.cms.user>
+        <suite.cms.admin>src/test/resources/suites/CMS/AdminCMS.xml</suite.cms.admin>
+        <suite.cms.master>src/test/resources/suites/CMS/CMSMaster.xml</suite.cms.master>
         <!-- Suite XML path - ALL -->
         <suite.all>src/test/resources/suites/SuiteAll.xml</suite.all>
 
@@ -446,7 +451,7 @@
                     <configuration>
                         <suiteXmlFiles>
                             <!--<suiteXmlFile>${suite.all}</suiteXmlFile>-->
-                            <suiteXmlFile>src/test/resources/suites/CMS/LoginTestCMS.xml</suiteXmlFile>
+                            <suiteXmlFile>${suite.cms.master}</suiteXmlFile>
                         </suiteXmlFiles>
                         <argLine>
                             -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectjweaver.version}/aspectjweaver-${aspectjweaver.version}.jar"

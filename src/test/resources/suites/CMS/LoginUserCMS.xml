@@ -1,16 +1,15 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
 
-<suite name="Regression Tests CMS">
+<suite name="Regression Tests CMS - User Login">
 
     <listeners>
         <listener class-name="com.anhtester.listeners.AnnotationTransformer"/>
     </listeners>
 
-    <test name="Login Test CMS" parallel="methods">
+    <test name="Login User Test CMS" parallel="methods">
         <parameter name="BROWSER" value="chrome"/>
         <classes>
             <class name="com.anhtester.projects.cms.tests.user.LoginUserTest"/>
-            <class name="com.anhtester.projects.cms.tests.admin.LoginAdminTest"/>
         </classes>
     </test>
 

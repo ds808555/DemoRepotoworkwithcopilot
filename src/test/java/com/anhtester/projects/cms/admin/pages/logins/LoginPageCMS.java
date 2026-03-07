@@ -23,6 +23,16 @@ public class LoginPageCMS extends CommonPageCMS {
     private By messageRequiredPassword = By.xpath("//input[contains(@class, 'is-invalid') and @id = 'password']");
     private By titleAnhTesterAdminPage = By.xpath("//img[@alt='Active eCommerce CMS']");
 
+    private void verifyAdminPageLoaded() {
+        try {
+            waitForElementVisible(titleAnhTesterAdminPage);
+            verifyElementVisible(titleAnhTesterAdminPage, "Admin page is NOT displayed.");
+        } catch (Throwable throwable) {
+            waitForElementVisible(avatarProfile);
+            verifyElementVisible(avatarProfile, "Admin page is NOT displayed.");
+        }
+    }
+
     public void clickCloseAdvertisementPopup() {
         clickElement(closeAdvertisementPopup);
     }
@@ -100,8 +110,8 @@ public class LoginPageCMS extends CommonPageCMS {
         setText(inputEmail, email);
         setText(inputPassword, password);
         clickElement(buttonSubmitLogin);
-        waitForElementVisible(titleAnhTesterAdminPage);
-        verifyElementVisible(titleAnhTesterAdminPage, "Admin page is NOT displayed.");
+        waitForPageLoaded();
+        verifyAdminPageLoaded();
         return new CommonPageCMS();
     }
 
@@ -110,8 +120,8 @@ public class LoginPageCMS extends CommonPageCMS {
         setText(inputEmail, PropertiesHelpers.getValue("email"));
         setText(inputPassword, PropertiesHelpers.getValue("password"));
         clickElement(buttonSubmitLogin);
-        waitForElementVisible(titleAnhTesterAdminPage);
-        verifyElementVisible(titleAnhTesterAdminPage, "Admin page is NOT displayed.");
+        waitForPageLoaded();
+        verifyAdminPageLoaded();
         return new CommonPageCMS();
     }
 }

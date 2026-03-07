@@ -1,0 +1,10 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+
+<suite name="Regression Tests CMS - User">
+    <suite-files>
+        <suite-file path="src/test/resources/suites/CMS/LoginUserCMS.xml"/>
+        <suite-file path="src/test/resources/suites/CMS/OrderProductCMS.xml"/>
+        <suite-file path="src/test/resources/suites/CMS/ProductInfoCMS.xml"/>
+        <suite-file path="src/test/resources/suites/CMS/ProfileCMS.xml"/>
+    </suite-files>
+</suite>

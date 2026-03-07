@@ -9,7 +9,7 @@
     <test name="Tests Add Product CMS">
         <parameter name="BROWSER" value="chrome"/>
         <classes>
-            <class name="com.anhtester.projects.cms.testcases.AddProductTest"/>
+            <class name="com.anhtester.projects.cms.tests.admin.AddProductTest"/>
         </classes>
     </test>
 

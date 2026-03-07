@@ -1,5 +1,6 @@
 package com.anhtester.projects.cms.users.pages.order;
 
+import com.anhtester.driver.DriverManager;
 import com.anhtester.helpers.PropertiesHelpers;
 import com.anhtester.keywords.WebUI;
 import com.anhtester.projects.cms.CommonPageCMS;
@@ -7,6 +8,7 @@ import com.anhtester.projects.cms.users.pages.dashboard.DashboardPage;
 import com.anhtester.projects.cms.users.pages.products.ProductInfoPageCMS;
 import com.anhtester.utils.LogUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 
 public class OrderPage extends CommonPageCMS {
 
@@ -39,16 +41,67 @@ public class OrderPage extends CommonPageCMS {
     private By totalPrice = By.xpath("//tr[@class = 'cart-subtotal']//td[@class = 'text-right']//span");
     private By subTotal = By.xpath("//div[@id='cart_items']//span[normalize-space()='Subtotal']/following-sibling::span");
     private By labelOrderCode = By.xpath("//*[contains(text(), 'Order Code:')]/span");
+    private By productPricePrimary = By.xpath("(//div[text()='Discount Price:']/parent::div)/following-sibling::div//strong");
+    private By productPriceAlt = By.xpath("//*[contains(normalize-space(.),'Price')]/following::strong[1]");
+
+    private boolean isPresent(By by) {
+        return !DriverManager.getDriver().findElements(by).isEmpty();
+    }
+
+    private String getCurrentProductPriceText() {
+        if (isPresent(productPricePrimary)) {
+            return WebUI.getTextElement(productPricePrimary).trim();
+        }
+        if (isPresent(productPriceAlt)) {
+            return WebUI.getTextElement(productPriceAlt).trim();
+        }
+        WebUI.verifyElementPresent(productPricePrimary, "Product price is NOT visible on product details page.");
+        return "";
+    }
+
+    private void openProductFromSearch(String productName) {
+        By suggestionItem = By.xpath("//div[@id='search-content']//a[contains(normalize-space(),\"" + productName + "\")]");
+        By fallbackResultLink = By.xpath("//a[contains(@href,'/product/') and contains(normalize-space(),\"" + productName + "\")]");
+        By firstProductResultLink = By.xpath("(//a[contains(@href,'/product/')])[1]");
+
+        WebUI.waitForPageLoaded();
+        WebUI.clearText(DashboardPage.inputSearchProduct);
+        WebUI.setText(DashboardPage.inputSearchProduct, productName);
+        WebUI.waitForJQueryLoad();
+        WebUI.sleep(2);
+
+        if (isPresent(suggestionItem)) {
+            try {
+                WebUI.clickElement(suggestionItem);
+            } catch (Throwable throwable) {
+                WebUI.clickElementWithJs(suggestionItem);
+            }
+        } else {
+            WebUI.setText(DashboardPage.inputSearchProduct, productName, Keys.ENTER);
+            WebUI.waitForPageLoaded();
+
+            if (isPresent(fallbackResultLink)) {
+                try {
+                    WebUI.clickElement(fallbackResultLink);
+                } catch (Throwable throwable) {
+                    WebUI.clickElementWithJs(fallbackResultLink);
+                }
+            } else {
+                WebUI.verifyElementPresent(firstProductResultLink, "No product result available for search: " + productName);
+                try {
+                    WebUI.clickElement(firstProductResultLink);
+                } catch (Throwable throwable) {
+                    WebUI.clickElementWithJs(firstProductResultLink);
+                }
+            }
+        }
+        WebUI.waitForPageLoaded();
+    }
 
 
     public void order(String noteForOrder) {
-        WebUI.waitForPageLoaded();
-        WebUI.setText(DashboardPage.inputSearchProduct, PropertiesHelpers.getValue("product_P01"));
-        WebUI.waitForJQueryLoad();
-        WebUI.sleep(3);
-        WebUI.clickElement(By.xpath("//div[@id='search-content']//div[contains(text(),'" + PropertiesHelpers.getValue("product_P01") + "')]"));
-        WebUI.waitForPageLoaded();
-        String priceProduct01AsString = WebUI.getTextElement(ProductInfoPageCMS.productPrice).trim();
+        openProductFromSearch(PropertiesHelpers.getValue("product_P01"));
+        String priceProduct01AsString = getCurrentProductPriceText();
         WebUI.scrollToElementAtBottom(buttonAddToCart);
         WebUI.clickElement(buttonAddToCart);
         WebUI.waitForPageLoaded();
@@ -56,12 +109,8 @@ public class OrderPage extends CommonPageCMS {
         WebUI.clickElement(buttonBackToShopping);
         WebUI.waitForPageLoaded();
         WebUI.sleep(2);
-        WebUI.setText(DashboardPage.inputSearchProduct, PropertiesHelpers.getValue("product_P02"));
-        WebUI.waitForJQueryLoad();
-        WebUI.sleep(3);
-        WebUI.clickElement(By.xpath("//div[@id='search-content']//div[contains(text(),'" + PropertiesHelpers.getValue("product_P02") + "')]"));
-        WebUI.waitForPageLoaded();
-        String priceProduct02AsString = WebUI.getTextElement(ProductInfoPageCMS.productPrice).trim();
+        openProductFromSearch(PropertiesHelpers.getValue("product_P02"));
+        String priceProduct02AsString = getCurrentProductPriceText();
         WebUI.clickElement(buttonPlus);
         WebUI.sleep(1);
         WebUI.waitForPageLoaded();

@@ -9,7 +9,7 @@
     <test name="Test Profile CMS">
         <parameter name="BROWSER" value="chrome"/>
         <classes>
-            <class name="com.anhtester.projects.cms.testcases.ProfileTest">
+            <class name="com.anhtester.projects.cms.tests.user.ProfileTest">
                 <methods>
                     <include name="TC_AddNewAddress"/>
                 </methods>

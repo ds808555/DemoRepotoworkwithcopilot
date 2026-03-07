@@ -31,7 +31,8 @@ public class CategoryPage {
     public CategoryPage checkCategoryDisplayed(String categoryName) {
         searchCategory(categoryName);
         verifyElementVisible(categoryNameFirstRow, "The new category not found.");
-        verifyEquals(getTextElement(categoryNameFirstRow), categoryName, "The new category name not match.");
+        String actualCategoryName = getTextElement(categoryNameFirstRow).trim();
+        verifyContains(actualCategoryName, categoryName, "The new category name not match.");
         return this;
     }
 

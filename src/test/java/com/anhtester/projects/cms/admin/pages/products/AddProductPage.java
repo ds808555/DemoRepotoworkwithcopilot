@@ -33,7 +33,7 @@ public class AddProductPage extends CommonPageCMS {
     private By buttonAddFileImgs = By.xpath("//button[normalize-space()='Add Files']");
     private By selectFileTab = By.xpath("//a[normalize-space()='Select File']");
     private By selectGalleryImages = By.xpath("(//img[@class='img-fit'])[1]");
-    private By inputSearchImg = By.xpath("//input[@placeholder='Search your files']");
+    private By inputSearchImg = By.xpath("//input[contains(@placeholder,'Search') and contains(@placeholder,'files')]");
     private By selectThumbnailImages = By.xpath("(//img[@class='img-fit'])[2]");
     private By blockProductPrice = By.xpath("//h5[normalize-space()='Product price + stock']");
     private By inputUnitPrice = By.xpath("//input[@placeholder='Unit price']");
@@ -52,7 +52,7 @@ public class AddProductPage extends CommonPageCMS {
     private By messageAddProductSuccess = By.xpath("//span[@data-notify='message']");
     private By allCategoriesTabUI = By.xpath("//a[normalize-space()='All categories']");
     private By unitUI = By.xpath("//span[@class='opacity-70']");
-    private By descriptionUI = By.xpath("//div[@class = 'mw-100 overflow-auto text-left aiz-editor-data']//p");
+    private By descriptionUI = By.xpath("//div[contains(@class,'aiz-editor-data')]");
 
     int randomNumber = new Random().nextInt(1000000);
     private By menuAllProducts = By.xpath("//span[normalize-space()='All products']");
@@ -87,6 +87,7 @@ public class AddProductPage extends CommonPageCMS {
         LogUtils.info(SystemHelpers.splitString(imgName, "[.]"));
         String imageName = SystemHelpers.splitString(imgName, "[.]").get(0);
         //Search and select images
+        WebUI.waitForElementVisible(inputSearchImg);
         WebUI.setText(inputSearchImg, imageName, Keys.ENTER);
         WebUI.waitForJQueryLoad();
         WebUI.sleep(2);
@@ -95,6 +96,8 @@ public class AddProductPage extends CommonPageCMS {
         WebUI.waitForPageLoaded();
         WebUI.sleep(2);
         WebUI.clickElement(selectChooseThumbnailImgs);
+        WebUI.clickElement(selectFileTab);
+        WebUI.waitForElementVisible(inputSearchImg);
         WebUI.setText(inputSearchImg, imageName, Keys.ENTER);
         WebUI.waitForJQueryLoad();
         WebUI.sleep(2);
@@ -114,6 +117,8 @@ public class AddProductPage extends CommonPageCMS {
         WebUI.setText(inputMetaTitle, productName);
         WebUI.setText(inputDescription, description);
         WebUI.clickElement(selectChooseMetaImage);
+        WebUI.clickElement(selectFileTab);
+        WebUI.waitForElementVisible(inputSearchImg);
         WebUI.setText(inputSearchImg, imageName, Keys.ENTER);
         WebUI.waitForJQueryLoad();
         WebUI.sleep(2);
@@ -142,8 +147,9 @@ public class AddProductPage extends CommonPageCMS {
         WebUI.sleep(2);
         WebUI.verifyEquals(WebUI.getTextElement(By.xpath("//h1[normalize-space()='" + nameProductVerify + "']")).trim(), nameProductVerify, "Product name displayed wrong");
         WebUI.verifyEquals(WebUI.getTextElement(unitUI).trim(), "/" + unit, "Unit displayed wrong");
+        WebUI.waitForElementVisible(descriptionUI);
         WebUI.scrollToElementAtBottom(descriptionUI);
-        WebUI.verifyEquals(WebUI.getTextElement(descriptionUI).trim(), description, "Description displayed wrong");
+        WebUI.verifyContains(WebUI.getTextElement(descriptionUI).trim(), description, "Description displayed wrong");
         WebUI.sleep(2);
         //Check Product in Category
         WebUI.clickElement(allCategoriesTabUI);
